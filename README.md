@@ -2,6 +2,10 @@
 
 This repository contains a simple Linux kernel module that prints "Hello, KernelCare!" to the kernel log when loaded and "Goodbye, KernelCare!" when unloaded. The module is designed for educational purposes to demonstrate basic kernel module operations.
 
+## Bonus part
+
+![proof](screen_recording.gif)
+
 ## Prerequisites
 
 - Before you can build and run this kernel module, ensure your system has the following software:

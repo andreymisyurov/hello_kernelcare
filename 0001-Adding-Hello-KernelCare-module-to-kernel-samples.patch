@@ -1,0 +1,116 @@
+From b4ec9fa0401b8512eddc303a39b9ad197a8b092f Mon Sep 17 00:00:00 2001
+From: amisyurov <amisyurov.c@arlo.com>
+Date: Mon, 12 Aug 2024 00:44:28 +0500
+Subject: [PATCH] Adding Hello KernelCare module to kernel samples.
+
+This module prints "Hello, KernelCare!" to the kernel log when loaded
+and "Goodbye, KernelCare!" when unloaded. The module demonstrates
+simple module functionality including initialization and cleanup.
+Signed-off-by: amisyurov <amisyurov.c@arlo.com>
+---
+ MAINTAINERS                                   |  4 +++
+ samples/Kconfig                               |  9 ++++++-
+ samples/amisyurov_hello_kernelcare/Makefile   | 26 +++++++++++++++++++
+ .../amisyurov_hello_kernelcare/module_hello.c | 22 ++++++++++++++++
+ 4 files changed, 60 insertions(+), 1 deletion(-)
+ create mode 100644 samples/amisyurov_hello_kernelcare/Makefile
+ create mode 100644 samples/amisyurov_hello_kernelcare/module_hello.c
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index f328373463b0..0e7c786aca8a 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -25376,3 +25376,7 @@ S:	Buried alive in reporters
+ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+ F:	*
+ F:	*/
++
++SAMPLE HELLO KERNELCARE MODULE
++M:	Andrey Misyurov <andrey.misyrov@gmail.com>
++F:	samples/amisyurov_hello_kernelcare/
+diff --git a/samples/Kconfig b/samples/Kconfig
+index b288d9991d27..72df40a84e61 100644
+--- a/samples/Kconfig
++++ b/samples/Kconfig
+@@ -290,9 +290,16 @@ config SAMPLE_CGROUP
+ 	depends on CGROUPS && CC_CAN_LINK && HEADERS_INSTALL
+ 	help
+ 	  Build samples that demonstrate the usage of the cgroup API.
++config SAMPLE_HELLO_KERNELCARE
++	tristate "Hello KernelCare sample module"
++	default m
++	help
++          This config option enables a sample module that prints "Hello, KernelCare!"
++          to the kernel log when loaded and "Goodbye, KernelCare!" when unloaded.
++          The module serves as an example of how to create simple kernel modules
++          that interact with the kernel logging system.
+ 
+ source "samples/rust/Kconfig"
+-
+ endif # SAMPLES
+ 
+ config HAVE_SAMPLE_FTRACE_DIRECT
+diff --git a/samples/amisyurov_hello_kernelcare/Makefile b/samples/amisyurov_hello_kernelcare/Makefile
+new file mode 100644
+index 000000000000..a75dd5394b41
+--- /dev/null
++++ b/samples/amisyurov_hello_kernelcare/Makefile
+@@ -0,0 +1,26 @@
++obj-m += module_hello.o
++CC = $(shell cat /proc/version | grep -oP 'gcc-\d+')
++
++all:
++	make -C /lib/modules/$(shell uname -r)/build CC=$(CC) M=$(PWD) modules
++
++clean:
++	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
++
++load:
++	sudo insmod module_hello.ko
++	@echo "Checking kernel log:"
++	@sudo dmesg -c
++	@echo "Checking our module in kernel:"
++	@lsmod | grep module_hello
++
++unload:
++	sudo rmmod module_hello.ko
++	@echo "Checking kernel log:"
++	@sudo dmesg -c
++	@echo "Checking our module in kernel:"
++	@if lsmod | grep -q module_hello; then \
++		echo "Module is still loaded in the system."; \
++	else \
++		echo "Module is not found in the system."; \
++	fi
+\ No newline at end of file
+diff --git a/samples/amisyurov_hello_kernelcare/module_hello.c b/samples/amisyurov_hello_kernelcare/module_hello.c
+new file mode 100644
+index 000000000000..cf07e949c9ce
+--- /dev/null
++++ b/samples/amisyurov_hello_kernelcare/module_hello.c
+@@ -0,0 +1,22 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/module.h>
++#include <linux/kernel.h>
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Andrey Misyurov");
++MODULE_DESCRIPTION("A simple Hello, KernelCare! module");
++
++static int __init hello_init(void)
++{
++	pr_info("Hello, KernelCare!\n");
++	return 0;
++}
++
++static void __exit hello_exit(void)
++{
++	pr_info("Goodbye, KernelCare!\n");
++}
++
++module_init(hello_init);
++module_exit(hello_exit);
++
+-- 
+2.34.1
+
